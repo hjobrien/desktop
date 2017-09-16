@@ -141,8 +141,8 @@ function getMenuState(state: IAppState): Map<MenuIDs, IMenuItemState> {
     'create-branch',
     'show-changes',
     'show-history',
-    'show-repository-list',
     'show-branches-list',
+    'open-external-editor',
   ]
 
   const menuStateBuilder = new MenuStateBuilder()
@@ -169,18 +169,27 @@ function getMenuState(state: IAppState): Map<MenuIDs, IMenuItemState> {
     )
 
     menuStateBuilder.setEnabled('view-repository-on-github', isHostedOnGitHub)
+    menuStateBuilder.setEnabled('create-pull-request', isHostedOnGitHub)
     menuStateBuilder.setEnabled('push', hasRemote && !networkActionInProgress)
     menuStateBuilder.setEnabled(
       'pull',
       hasPublishedBranch && !networkActionInProgress
     )
     menuStateBuilder.setEnabled('create-branch', !tipStateIsUnknown)
+
+    if (
+      selectedState &&
+      selectedState.type === SelectionType.MissingRepository
+    ) {
+      menuStateBuilder.disable('open-external-editor')
+    }
   } else {
     for (const id of repositoryScopedIDs) {
       menuStateBuilder.disable(id)
     }
 
     menuStateBuilder.disable('view-repository-on-github')
+    menuStateBuilder.disable('create-pull-request')
 
     if (
       selectedState &&

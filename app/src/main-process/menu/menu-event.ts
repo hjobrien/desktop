@@ -22,3 +22,6 @@ export type MenuEvent =
   | 'clone-repository'
   | 'show-about'
   | 'boomtown'
+  | 'create-pull-request'
+  | 'install-cli'
+  | 'open-external-editor'

@@ -91,8 +91,6 @@ export class AuthenticationForm extends React.Component<
           type="password"
           disabled={disabled}
           onChange={this.onPasswordChange}
-          labelLinkText="Forgot password?"
-          labelLinkUri={this.props.forgotPasswordUrl}
         />
 
         {this.renderError()}
@@ -110,12 +108,22 @@ export class AuthenticationForm extends React.Component<
     )
     return (
       <div className="actions">
-        {this.props.supportsBasicAuth
-          ? <Button type="submit" disabled={signInDisabled}>
-              {this.props.loading ? <Loading /> : null} Sign in
-            </Button>
-          : null}
+        {this.props.supportsBasicAuth ? (
+          <Button type="submit" disabled={signInDisabled}>
+            {this.props.loading ? <Loading /> : null} Sign in
+          </Button>
+        ) : null}
+
         {this.props.additionalButtons}
+
+        {this.props.supportsBasicAuth ? (
+          <LinkButton
+            className="forgot-password-link"
+            uri={this.props.forgotPasswordUrl}
+          >
+            Forgot password
+          </LinkButton>
+        ) : null}
       </div>
     )
   }
@@ -141,12 +149,12 @@ export class AuthenticationForm extends React.Component<
     return (
       <div>
         {basicAuth ? <hr className="short-rule" /> : null}
-        {basicAuth
-          ? null
-          : <p>
-              Your GitHub Enterprise instance requires you to sign in with your
-              browser.
-            </p>}
+        {basicAuth ? null : (
+          <p>
+            Your GitHub Enterprise instance requires you to sign in with your
+            browser.
+          </p>
+        )}
 
         <div className="sign-in-footer">
           {basicAuth ? browserSignInLink : browserSignInButton}
@@ -162,11 +170,7 @@ export class AuthenticationForm extends React.Component<
       return null
     }
 
-    return (
-      <Errors>
-        {error.message}
-      </Errors>
-    )
+    return <Errors>{error.message}</Errors>
   }
 
   private onUsernameChange = (event: React.FormEvent<HTMLInputElement>) => {

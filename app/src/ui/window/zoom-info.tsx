@@ -18,8 +18,8 @@ const holdDuration = 750
 /**
  * A component which displays the current zoom factor of the window
  * when it changes. This component is rendered on top of all other
- * content (except for dialogs, we can't put ourselves on top of dialogs
- * easily at the moment).
+ * content (except for dialogs, which we can't put ourselves on top of easily at
+ * the moment, and the fullscreen notification.)
  */
 export class ZoomInfo extends React.Component<IZoomInfoProps, IZoomInfoState> {
   private infoDisappearTimeoutId: number | null = null
@@ -45,11 +45,11 @@ export class ZoomInfo extends React.Component<IZoomInfoProps, IZoomInfoState> {
     }
 
     if (this.infoDisappearTimeoutId !== null) {
-      clearTimeout(this.infoDisappearTimeoutId)
+      window.clearTimeout(this.infoDisappearTimeoutId)
     }
 
     if (this.transitionGroupDisappearTimeoutId !== null) {
-      clearTimeout(this.transitionGroupDisappearTimeoutId)
+      window.clearTimeout(this.transitionGroupDisappearTimeoutId)
     }
 
     this.infoDisappearTimeoutId = window.setTimeout(
@@ -59,7 +59,7 @@ export class ZoomInfo extends React.Component<IZoomInfoProps, IZoomInfoState> {
 
     this.transitionGroupDisappearTimeoutId = window.setTimeout(
       this.onTransitionGroupDisappearTimeout,
-      holdDuration + transitionDuration
+      transitionDuration + holdDuration + transitionDuration
     )
 
     const transitionName =
@@ -92,9 +92,7 @@ export class ZoomInfo extends React.Component<IZoomInfoProps, IZoomInfoState> {
 
     return (
       <div>
-        <span>
-          {zoomPercent}
-        </span>
+        <span>{zoomPercent}</span>
       </div>
     )
   }

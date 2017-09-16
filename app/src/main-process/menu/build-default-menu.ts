@@ -1,13 +1,22 @@
-import { Menu, ipcMain } from 'electron'
-import { shell } from '../../lib/dispatcher/app-shell'
-import { SharedProcess } from '../../shared-process/shared-process'
+import { Menu, ipcMain, shell, app } from 'electron'
 import { ensureItemIds } from './ensure-item-ids'
 import { MenuEvent } from './menu-event'
 import { getLogPath } from '../../lib/logging/get-log-path'
 import { mkdirIfNeeded } from '../../lib/file-system'
+
 import { log } from '../log'
 
-export function buildDefaultMenu(sharedProcess: SharedProcess): Electron.Menu {
+const defaultEditorLabel = __DARWIN__
+  ? 'Open in External Editor'
+  : 'Open in external editor'
+const defaultShellLabel = __DARWIN__
+  ? 'Open in Terminal'
+  : 'Open in Command Prompt'
+
+export function buildDefaultMenu(
+  editorLabel: string = defaultEditorLabel,
+  shellLabel: string = defaultShellLabel
+): Electron.Menu {
   const template = new Array<Electron.MenuItemConstructorOptions>()
   const separator: Electron.MenuItemConstructorOptions = { type: 'separator' }
 
@@ -26,6 +35,12 @@ export function buildDefaultMenu(sharedProcess: SharedProcess): Electron.Menu {
           id: 'preferences',
           accelerator: 'CmdOrCtrl+,',
           click: emit('show-preferences'),
+        },
+        separator,
+        {
+          label: 'Install Command Line Tool…',
+          id: 'install-cli',
+          click: emit('install-cli'),
         },
         separator,
         {
@@ -150,13 +165,18 @@ export function buildDefaultMenu(sharedProcess: SharedProcess): Electron.Menu {
       {
         label: '&Reload',
         id: 'reload-window',
-        accelerator: 'CmdOrCtrl+R',
+        // Ctrl+Alt is interpreted as AltGr on international keyboards and this
+        // can clash with other shortcuts. We should always use Ctrl+Shift for
+        // chorded shortcuts, but this menu item is not a user-facing feature
+        // so we are going to keep this one around and save Ctrl+Shift+R for
+        // a different shortcut in the future...
+        accelerator: 'CmdOrCtrl+Alt+R',
         click(item: any, focusedWindow: Electron.BrowserWindow) {
           if (focusedWindow) {
             focusedWindow.reload()
           }
         },
-        visible: __RELEASE_ENV__ !== 'production',
+        visible: __RELEASE_CHANNEL__ === 'development',
       },
       {
         id: 'show-devtools',
@@ -171,13 +191,6 @@ export function buildDefaultMenu(sharedProcess: SharedProcess): Electron.Menu {
             focusedWindow.webContents.toggleDevTools()
           }
         },
-      },
-      {
-        label: __DARWIN__ ? 'Debug Shared Process' : '&Debug shared process',
-        click(item: any, focusedWindow: Electron.BrowserWindow) {
-          sharedProcess.show()
-        },
-        visible: __RELEASE_ENV__ !== 'production',
       },
     ],
   })
@@ -207,12 +220,13 @@ export function buildDefaultMenu(sharedProcess: SharedProcess): Electron.Menu {
       {
         id: 'view-repository-on-github',
         label: __DARWIN__ ? 'View on GitHub' : '&View on GitHub',
-        accelerator: 'CmdOrCtrl+Alt+G',
+        accelerator: 'CmdOrCtrl+Shift+G',
         click: emit('view-repository-on-github'),
       },
       {
-        label: __DARWIN__ ? 'Open in Terminal' : 'Op&en command prompt',
+        label: shellLabel,
         id: 'open-in-shell',
+        accelerator: 'Ctrl+`',
         click: emit('open-in-shell'),
       },
       {
@@ -220,6 +234,12 @@ export function buildDefaultMenu(sharedProcess: SharedProcess): Electron.Menu {
         id: 'open-working-directory',
         accelerator: 'CmdOrCtrl+Shift+F',
         click: emit('open-working-directory'),
+      },
+      {
+        label: editorLabel,
+        id: 'open-external-editor',
+        accelerator: 'CmdOrCtrl+Shift+A',
+        click: emit('open-external-editor'),
       },
       separator,
       {
@@ -272,6 +292,12 @@ export function buildDefaultMenu(sharedProcess: SharedProcess): Electron.Menu {
         accelerator: 'CmdOrCtrl+Shift+C',
         click: emit('compare-branch'),
       },
+      {
+        label: __DARWIN__ ? 'Create Pull Request' : 'Create &pull request',
+        id: 'create-pull-request',
+        accelerator: 'CmdOrCtrl+R',
+        click: emit('create-pull-request'),
+      },
     ],
   })
 
@@ -292,6 +318,15 @@ export function buildDefaultMenu(sharedProcess: SharedProcess): Electron.Menu {
     label: __DARWIN__ ? 'Report Issue…' : 'Report issue…',
     click() {
       shell.openExternal('https://github.com/desktop/desktop/issues/new')
+    },
+  }
+
+  const contactSupportItem: Electron.MenuItemConstructorOptions = {
+    label: __DARWIN__ ? 'Contact GitHub Support…' : '&Contact GitHub support…',
+    click() {
+      shell.openExternal(
+        `https://github.com/contact?from_desktop_app=1&app_version=${app.getVersion()}`
+      )
     },
   }
 
@@ -316,7 +351,12 @@ export function buildDefaultMenu(sharedProcess: SharedProcess): Electron.Menu {
     },
   }
 
-  const helpItems = [submitIssueItem, showUserGuides, showLogsItem]
+  const helpItems = [
+    submitIssueItem,
+    contactSupportItem,
+    showUserGuides,
+    showLogsItem,
+  ]
 
   if (__DEV__) {
     helpItems.push(
