@@ -18,7 +18,7 @@ import { assertNever } from '../lib/fatal-error'
 import { Octicon, OcticonSymbol } from './octicons'
 
 /** The widest the sidebar can be with the minimum window size. */
-const MaxSidebarWidth = 495
+// const MaxSidebarWidth = 495
 
 interface IRepositoryProps {
   readonly repository: Repo
@@ -142,10 +142,9 @@ export class RepositoryView extends React.Component<IRepositoryProps, {}> {
       <Resizable
         id="repository-sidebar"
         width={this.props.sidebarWidth}
-        maximumWidth={window.innerWidth * 0.75}
         onReset={this.handleSidebarWidthReset}
         onResize={this.handleSidebarResize}
-        maximumWidth={MaxSidebarWidth}
+        maximumWidth={window.innerWidth - 460}
       >
         {this.renderTabs()}
         {this.renderSidebarContents()}
